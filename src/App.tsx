@@ -2,6 +2,7 @@ import React, { Fragment, useCallback, useMemo, useState } from 'react'
 import { loadCssFile } from './util/load-css-file'
 import { Atrule, CssNode, Declaration, parse } from 'css-tree'
 import { buildZip } from './util/build-zip'
+import { saveAs } from 'file-saver'
 
 export function App() {
   const [cssFile, setCssFile] = useState('')
@@ -119,19 +120,20 @@ function DisplayCssNode({ node }: { node: CssNode }): JSX.Element {
 
 
 function FontDownloader({ fontFaces }: { fontFaces: Atrule[] }): JSX.Element {
-  const [fontUrl, setFontUrl] = useState('/public')
+  const [fontBaseUrl, setFontBaseUrl] = useState('/public')
 
 
   return <section className={'p-4 border-2 border-gray-300'}>
     <label className={'flex flex-col gap-2 mb-4'}>
-      <span className={'font-bold block'}>Absolute or relative url for font files</span>
-      <input className={'border-gray-300 border-2 px-2 py-1'} type={'text'} value={fontUrl} onChange={e => setFontUrl(e.target.value)} />
+      <span className={'font-bold block'}>Font base url</span>
+      <input className={'border-gray-300 border-2 px-2 py-1'} type={'text'} value={fontBaseUrl} onChange={e => setFontBaseUrl(e.target.value)} />
     </label>
 
     <button className={'bg-green-700 rounded px-4 py-1'}
-            onClick={() => {
-              if (fontUrl) {
-                const zip = buildZip(fontFaces)
+            onClick={async () => {
+              if (fontBaseUrl) {
+                const zip = await buildZip(fontFaces, fontBaseUrl)
+                saveAs(zip, 'fonts.zip')
               }
             }}>Download
     </button>

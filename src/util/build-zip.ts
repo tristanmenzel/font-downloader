@@ -1,5 +1,6 @@
 import { Atrule, CssNode, Declaration, Url } from 'css-tree'
 import { downloadFonts } from './download-fonts'
+import JSZip from 'jszip'
 
 
 interface FontFace {
@@ -9,7 +10,7 @@ interface FontFace {
   weight: number | string
 }
 
-export async function buildZip(fontFaces: Atrule[]) {
+export async function buildZip(fontFaces: Atrule[], fontBaseUrl: string) {
 
 
   const fonts: FontFace[] = []
@@ -89,6 +90,36 @@ export async function buildZip(fontFaces: Atrule[]) {
   )
 
   const downloadedFonts = await downloadFonts(fontsToDownload)
+
+  const zip = new JSZip()
+  const fontsFolder = zip.folder('fonts')!
+  Object.entries(downloadedFonts).forEach(([name, file]) => {
+    fontsFolder.file(name, file)
+  })
+  zip.file('styles.css', buildFontFaceStyles(fonts, fontBaseUrl))
+
+  return zip.generateAsync({type: 'blob'})
+}
+
+function buildFontFaceStyles(fonts: FontFace[], fontBaseUrl: string) {
+
+
+
+  return fonts.map(f => `
+    @font-face {
+      font-family: "${f.name}";
+      src: ${buildFontSource(f, fontBaseUrl, f.sources)};
+      font-weight: ${f.weight};
+      font-style: ${f.style};
+    }  
+  `).join('\n\n')
+
+  function buildFontSource(fontFace: FontFace, fontBaseUrl: string, sources: Record<string, string>) {
+    return Object.entries(sources)
+      .map(([format]) => `url('${fontBaseUrl}/${getFontFileName(fontFace, format)}') format('${format}')`)
+      .join(', ')
+  }
+
 
 }
 
