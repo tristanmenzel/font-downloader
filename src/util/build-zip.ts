@@ -8,6 +8,7 @@ interface FontFace {
   sources: Record<string, string>
   style: string
   weight: number | string
+  unicodeRange?: string
 }
 
 export async function buildZip(fontFaces: Atrule[], fontBaseUrl: string) {
@@ -72,6 +73,15 @@ export async function buildZip(fontFaces: Atrule[], fontBaseUrl: string) {
           return sources
         })[0] ?? {}
 
+        const unicodeRange = children
+            .filter(declarationOfType('unicode-range'))
+            .map(x => {
+                assertType(x.value, 'Value')
+                console.log(x.value.children)
+                return x.value.children.toArray().filter(ofType('UnicodeRange')).map(x => x.value).join(', ')
+
+            })[0] ?? undefined
+
 
       // const name = faceBlock.block?.children
       //   .filter(n => n.type === '')
@@ -81,6 +91,7 @@ export async function buildZip(fontFaces: Atrule[], fontBaseUrl: string) {
         sources,
         style,
         weight,
+        unicodeRange,
       })
 
     })
@@ -110,7 +121,8 @@ function buildFontFaceStyles(fonts: FontFace[], fontBaseUrl: string) {
       font-family: "${f.name}";
       src: ${buildFontSource(f, fontBaseUrl, f.sources)};
       font-weight: ${f.weight};
-      font-style: ${f.style};
+      font-style: ${f.style};${f.unicodeRange ? `
+      unicode-range: ${f.unicodeRange};` : ''}
     }  
   `).join('\n\n')
 

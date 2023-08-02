@@ -112,7 +112,8 @@ function DisplayCssNode({ node }: { node: CssNode }): JSX.Element {
       return <span>{node.name}({node.children.toArray().map((c, i) => <DisplayCssNode node={c} key={i} />)})</span>
     case 'Raw':
       return <>{node.value}</>
-
+    case 'UnicodeRange':
+      return <>{node.value}</>
     default:
       return <>{node.type} not supported</>
   }
